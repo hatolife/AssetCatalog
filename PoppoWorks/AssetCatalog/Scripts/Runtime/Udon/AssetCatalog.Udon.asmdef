@@ -1,0 +1,19 @@
+{
+    "name": "AssetCatalog.Udon",
+    "rootNamespace": "AssetCatalog",
+    "references": [
+        "UdonSharp.Runtime",
+        "VRC.Udon",
+        "VRC.SDK3",
+        "VRC.SDKBase"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
