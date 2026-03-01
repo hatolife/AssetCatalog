@@ -2,6 +2,7 @@
 
 using System.Collections.Generic;
 using System.IO;
+using System;
 
 namespace AssetCatalog.Editor
 {
@@ -46,7 +47,7 @@ namespace AssetCatalog.Editor
         public static EntryGroup[] LoadCatalog(string path)
         {
             var lines = File.ReadAllLines(path);
-            if (lines.Length < 2) return new EntryGroup[0];
+            if (lines.Length < 2) return Array.Empty<EntryGroup>();
 
             var result = new List<EntryGroup>();
             string currentGroup = null;
@@ -67,7 +68,7 @@ namespace AssetCatalog.Editor
                         currentEntries = null;
                     }
                     // スペーサーグループを追加
-                    result.Add(new EntryGroup { groupName = SPACER_MARKER, entries = new CatalogEntry[0] });
+                    result.Add(new EntryGroup { groupName = SPACER_MARKER, entries = Array.Empty<CatalogEntry>() });
                     continue;
                 }
 

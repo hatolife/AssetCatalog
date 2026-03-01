@@ -3,8 +3,6 @@
 using UdonSharp;
 using UnityEngine;
 using UnityEngine.UI;
-using VRC.SDKBase;
-using VRC.Udon;
 
 namespace AssetCatalog
 {
@@ -26,6 +24,11 @@ namespace AssetCatalog
             {
                 inputFieldContainer.SetActive(true);
             }
+        }
+
+        public void SetUrl(string newUrl)
+        {
+            url = newUrl;
         }
     }
 }

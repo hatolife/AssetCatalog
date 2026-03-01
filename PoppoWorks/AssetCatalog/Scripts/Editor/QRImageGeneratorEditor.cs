@@ -1,47 +1,86 @@
 // SPDX-License-Identifier: CC0-1.0
 
+using System.Threading.Tasks;
+using UnityEditor;
 using UnityEngine;
 using UnityEngine.UI;
-using UnityEditor;
-using System.Threading.Tasks;
-using System.Net.Http;
 
 namespace AssetCatalog.Editor
 {
     [CustomEditor(typeof(QRImageGenerator))]
     public class QRImageGeneratorEditor : UnityEditor.Editor
     {
+        private SerializedProperty _titleLabelProperty;
+        private SerializedProperty _commentLabelProperty;
+        private SerializedProperty _linkFieldProperty;
+        private SerializedProperty _backgroundPanelProperty;
+        private SerializedProperty _qrImageProperty;
+        private SerializedProperty _categoryProperty;
+        private SerializedProperty _titleProperty;
+        private SerializedProperty _commentProperty;
+        private SerializedProperty _linkProperty;
+        private SerializedProperty _textColorProperty;
+        private SerializedProperty _backgroundColorProperty;
+        private SerializedProperty _qrApiTimeoutSecondsProperty;
+        private SerializedProperty _qrApiRetryCountProperty;
+        private SerializedProperty _qrApiRetryDelaySecondsProperty;
+
+        private void OnEnable()
+        {
+            _titleLabelProperty = serializedObject.FindProperty("titleLabel");
+            _commentLabelProperty = serializedObject.FindProperty("commentLabel");
+            _linkFieldProperty = serializedObject.FindProperty("linkField");
+            _backgroundPanelProperty = serializedObject.FindProperty("backgroundPanel");
+            _qrImageProperty = serializedObject.FindProperty("qrImage");
+            _categoryProperty = serializedObject.FindProperty("category");
+            _titleProperty = serializedObject.FindProperty("title");
+            _commentProperty = serializedObject.FindProperty("comment");
+            _linkProperty = serializedObject.FindProperty("link");
+            _textColorProperty = serializedObject.FindProperty("textColor");
+            _backgroundColorProperty = serializedObject.FindProperty("backgroundColor");
+            _qrApiTimeoutSecondsProperty = serializedObject.FindProperty("qrApiTimeoutSeconds");
+            _qrApiRetryCountProperty = serializedObject.FindProperty("qrApiRetryCount");
+            _qrApiRetryDelaySecondsProperty = serializedObject.FindProperty("qrApiRetryDelaySeconds");
+        }
+
         public override void OnInspectorGUI()
         {
-            var qr = (QRImageGenerator)target;
+            serializedObject.Update();
 
             EditorGUILayout.LabelField("UI References", EditorStyles.boldLabel);
-            qr.titleLabel = (Text)EditorGUILayout.ObjectField("Title Label", qr.titleLabel, typeof(Text), true);
-            qr.commentLabel = (Text)EditorGUILayout.ObjectField("Comment Label", qr.commentLabel, typeof(Text), true);
-            qr.linkField = (InputField)EditorGUILayout.ObjectField("Link Field", qr.linkField, typeof(InputField), true);
-            qr.backgroundPanel = (Image)EditorGUILayout.ObjectField("Background Panel", qr.backgroundPanel, typeof(Image), true);
-            qr.qrImage = (Image)EditorGUILayout.ObjectField("QR Image", qr.qrImage, typeof(Image), true);
+            EditorGUILayout.PropertyField(_titleLabelProperty, new GUIContent("Title Label"));
+            EditorGUILayout.PropertyField(_commentLabelProperty, new GUIContent("Comment Label"));
+            EditorGUILayout.PropertyField(_linkFieldProperty, new GUIContent("Link Field"));
+            EditorGUILayout.PropertyField(_backgroundPanelProperty, new GUIContent("Background Panel"));
+            EditorGUILayout.PropertyField(_qrImageProperty, new GUIContent("QR Image"));
 
             EditorGUILayout.Space();
 
             EditorGUILayout.LabelField("Settings", EditorStyles.boldLabel);
-            qr.category = EditorGUILayout.TextField("Category", qr.category);
-            qr.title = EditorGUILayout.TextField("Title", qr.title);
-            qr.comment = EditorGUILayout.TextField("Comment", qr.comment);
-            qr.link = EditorGUILayout.TextField("Link", qr.link);
-            qr.textColor = EditorGUILayout.ColorField("Text Color", qr.textColor);
-            qr.backgroundColor = EditorGUILayout.ColorField("Background Color", qr.backgroundColor);
+            EditorGUILayout.PropertyField(_categoryProperty, new GUIContent("Category"));
+            EditorGUILayout.PropertyField(_titleProperty, new GUIContent("Title"));
+            EditorGUILayout.PropertyField(_commentProperty, new GUIContent("Comment"));
+            EditorGUILayout.PropertyField(_linkProperty, new GUIContent("Link"));
+            EditorGUILayout.PropertyField(_textColorProperty, new GUIContent("Text Color"));
+            EditorGUILayout.PropertyField(_backgroundColorProperty, new GUIContent("Background Color"));
+            EditorGUILayout.PropertyField(_qrApiTimeoutSecondsProperty, new GUIContent("QR API Timeout (sec)"));
+            EditorGUILayout.PropertyField(_qrApiRetryCountProperty, new GUIContent("QR API Retry Count"));
+            EditorGUILayout.PropertyField(_qrApiRetryDelaySecondsProperty, new GUIContent("QR API Delay (sec)"));
+
+            _qrApiTimeoutSecondsProperty.intValue = Mathf.Max(1, _qrApiTimeoutSecondsProperty.intValue);
+            _qrApiRetryCountProperty.intValue = Mathf.Max(0, _qrApiRetryCountProperty.intValue);
+            _qrApiRetryDelaySecondsProperty.floatValue = Mathf.Max(0f, _qrApiRetryDelaySecondsProperty.floatValue);
 
             EditorGUILayout.Space();
 
             EditorGUILayout.BeginHorizontal();
             if (GUILayout.Button("Save Settings"))
             {
-                SaveSettings(qr);
+                SaveSettings();
             }
             if (GUILayout.Button("Load Settings"))
             {
-                LoadSettings(qr);
+                LoadSettings();
             }
             EditorGUILayout.EndHorizontal();
 
@@ -49,45 +88,66 @@ namespace AssetCatalog.Editor
 
             if (GUILayout.Button("Generate QR Code"))
             {
-                if (qr.qrImage != null && !string.IsNullOrEmpty(qr.link))
-                {
-                    UnpackPrefabIfNeeded(qr.gameObject);
-                    qr.ApplyTexts();
-                    qr.ApplyColors();
-                    GenerateQRCodeAsync(qr);
-                }
-                else
-                {
-                    EditorUtility.DisplayDialog("Error", "QR Image and Link are required", "OK");
-                }
+                GenerateQrCode();
             }
+
+            serializedObject.ApplyModifiedProperties();
         }
 
-        private void SaveSettings(QRImageGenerator qr)
+        private void SaveSettings()
         {
-            string defaultName = string.IsNullOrEmpty(qr.title) ? "qr_settings" : qr.title;
+            string defaultName = string.IsNullOrEmpty(_titleProperty.stringValue) ? "qr_settings" : _titleProperty.stringValue;
             string path = EditorUtility.SaveFilePanel("Save Settings", "", defaultName, "tsv");
-            if (!string.IsNullOrEmpty(path))
+            if (string.IsNullOrEmpty(path))
             {
-                TSVHelper.SaveQRSettings(path, qr.category, qr.title, qr.comment, qr.link);
-                Debug.Log($"Settings saved to: {path}");
+                return;
             }
+
+            TSVHelper.SaveQRSettings(
+                path,
+                _categoryProperty.stringValue,
+                _titleProperty.stringValue,
+                _commentProperty.stringValue,
+                _linkProperty.stringValue);
+            Debug.Log($"Settings saved to: {path}");
         }
 
-        private void LoadSettings(QRImageGenerator qr)
+        private void LoadSettings()
         {
             string path = EditorUtility.OpenFilePanel("Load Settings", "", "tsv");
-            if (!string.IsNullOrEmpty(path))
+            if (string.IsNullOrEmpty(path))
             {
-                Undo.RecordObject(qr, "Load QR Settings");
-                var (category, title, comment, link) = TSVHelper.LoadQRSettings(path);
-                qr.category = category;
-                qr.title = title;
-                qr.comment = comment;
-                qr.link = link;
-                EditorUtility.SetDirty(qr);
-                Debug.Log($"Settings loaded from: {path}");
+                return;
             }
+
+            Undo.RecordObject(target, "Load QR Settings");
+            var (category, title, comment, link) = TSVHelper.LoadQRSettings(path);
+            _categoryProperty.stringValue = category;
+            _titleProperty.stringValue = title;
+            _commentProperty.stringValue = comment;
+            _linkProperty.stringValue = link;
+            serializedObject.ApplyModifiedProperties();
+            EditorUtility.SetDirty(target);
+            Debug.Log($"Settings loaded from: {path}");
+        }
+
+        private void GenerateQrCode()
+        {
+            var qr = (QRImageGenerator)target;
+            var qrImage = _qrImageProperty.objectReferenceValue as Image;
+            string link = _linkProperty.stringValue;
+
+            if (qrImage == null || string.IsNullOrEmpty(link))
+            {
+                EditorUtility.DisplayDialog("Error", "QR Image and Link are required", "OK");
+                return;
+            }
+
+            UnpackPrefabIfNeeded(qr.gameObject);
+            serializedObject.ApplyModifiedProperties();
+            qr.ApplyTexts();
+            qr.ApplyColors();
+            GenerateQRCodeAsync(qr, qrImage, link);
         }
 
         private void UnpackPrefabIfNeeded(GameObject obj)
@@ -100,25 +160,38 @@ namespace AssetCatalog.Editor
             }
         }
 
-        private async void GenerateQRCodeAsync(QRImageGenerator qr)
+        private async void GenerateQRCodeAsync(QRImageGenerator qr, Image targetImage, string link)
         {
-            var qrData = await FetchQRCode(qr.link);
-            if (!string.IsNullOrEmpty(qrData))
+            QRCodeCache.ResetStats();
+            try
             {
-                ApplyQRImage(qrData, qr.qrImage);
+                var qrBytes = await FetchQRCode(
+                    link,
+                    Mathf.Max(1, qr.qrApiTimeoutSeconds),
+                    Mathf.Max(0, qr.qrApiRetryCount),
+                    Mathf.Max(0f, qr.qrApiRetryDelaySeconds));
+
+                if (qrBytes != null && qrBytes.Length > 0)
+                {
+                    ApplyQRImage(qrBytes, targetImage);
+                }
+            }
+            finally
+            {
+                QRCodeCache.LogStatsSummary();
             }
         }
 
-        private async Task<string> FetchQRCode(string url)
+        private async Task<byte[]> FetchQRCode(string url, int timeoutSeconds, int retryCount, float retryDelaySeconds)
         {
             try
             {
-                string apiUrl = $"https://api.qrserver.com/v1/create-qr-code/?size=150x150&data={UnityEngine.Networking.UnityWebRequest.EscapeURL(url)}&format=png";
-                using (var client = new HttpClient())
-                {
-                    var response = await client.GetByteArrayAsync(apiUrl);
-                    return System.Convert.ToBase64String(response);
-                }
+                return await QRCodeCache.GetOrFetchPngAsync(
+                    url,
+                    150,
+                    timeoutSeconds,
+                    retryCount,
+                    retryDelaySeconds);
             }
             catch (System.Exception ex)
             {
@@ -127,10 +200,10 @@ namespace AssetCatalog.Editor
             }
         }
 
-        private void ApplyQRImage(string base64Data, Image targetImage)
+        private static void ApplyQRImage(byte[] qrBytes, Image targetImage)
         {
             var texture = new Texture2D(1, 1);
-            texture.LoadImage(System.Convert.FromBase64String(base64Data));
+            texture.LoadImage(qrBytes);
             targetImage.sprite = Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height), Vector2.zero);
         }
     }

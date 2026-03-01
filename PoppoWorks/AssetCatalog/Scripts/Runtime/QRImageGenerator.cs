@@ -22,6 +22,14 @@ namespace AssetCatalog
         public Color textColor = Color.white;
         public Color backgroundColor = Color.black;
 
+        [Header("QR API")]
+        [Min(1)]
+        public int qrApiTimeoutSeconds = 10;
+        [Range(0, 5)]
+        public int qrApiRetryCount = 1;
+        [Min(0f)]
+        public float qrApiRetryDelaySeconds = 1f;
+
         public void ApplyTexts()
         {
             if (titleLabel != null)
