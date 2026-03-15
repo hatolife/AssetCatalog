@@ -1,7 +1,7 @@
 # AssetCatalog 仕様書
 > 更新日: 2026-03-14
 
-この文書は実装の詳細仕様というより、運用時に前提とするデータ形式と構成の要約です。
+この文書は配布物へ含める簡易仕様メモです。実際の運用前提は単体版 `AssetCatalog/spec.md` と同じです。
 
 ## TSV形式
 
@@ -33,11 +33,13 @@ category	title	comment	url
 | UrlDisplayHandlerUdon | Udon版 |
 | UrlInputFieldControllerUdon | Udon版 |
 
+## アセンブリ構成
+
 ## 補足
 
-- QR コードは Editor 時に取得して埋め込む運用を想定
-- 生成結果の見た目はフォント、Canvas 構成、プレハブ依存
-- このリポジトリ内の説明は配布物向け README と内容を揃える
+- QR コードは Editor 時に生成してシーンへ埋め込む
+- TSV は人手編集を想定した最小構成
+- UI の最終見た目は利用側プロジェクトの Canvas 構成に依存する
 
 ## ライセンス
 

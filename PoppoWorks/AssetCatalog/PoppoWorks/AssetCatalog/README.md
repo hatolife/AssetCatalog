@@ -1,13 +1,13 @@
 # AssetCatalog
 > 更新日: 2026-03-14
 
-VRChat 向けアセットカタログ生成ツールです。TSV から一覧 UI を生成し、URL の表示や QR コード配置をまとめて行います。
+VRChat 向けアセットカタログ生成ツールです。配布物へ同梱する想定で、単体 README と同じ前提を記載しています。
 
 ## 現在の位置づけ
 
-- このディレクトリは単体配布向けの説明
-- 実装と同梱用ドキュメントは `AssetCatalog/PoppoWorks/AssetCatalog/` にも複製あり
-- サンプル入力は [sample_assets_list.tsv](/home/user/work/PoppoWorks/AssetCatalog/sample_assets_list.tsv) を参照
+- このディレクトリはパッケージ同梱用の複製ドキュメント
+- 元資料はリポジトリ直下の `AssetCatalog/` にあります
+- サンプル TSV は `AssetCatalog/sample_assets_list.tsv` を基準に利用してください
 
 ## 基本フロー
 
@@ -16,7 +16,7 @@ VRChat 向けアセットカタログ生成ツールです。TSV から一覧 UI
 3. 「Load」でデータを読み込み
 4. 「Generate」で表示を生成
 
-生成は Editor 上で完結し、ワールド実行中に TSV を読む前提ではありません。
+生成は Editor 上で行い、シーン内に UI と QR を配置する運用です。
 
 ## TSV形式
 
@@ -45,9 +45,9 @@ category	title	comment	url
 ## 入力データの前提
 
 - 1 行目はヘッダー
-- 空行はスペーサーとして扱う
-- 同一 `category` は連続していなくてもグループ化対象
-- `url` はそのまま表示されるため、事前に内容確認が必要
+- 空行はスペーサー扱い
+- 同じ `category` は自動でまとまる
+- URL の正当性チェックは別途行う前提
 
 ## 表示形式
 
